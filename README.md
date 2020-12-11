@@ -12,6 +12,8 @@ noebrown@Noes-MacBook-Pro cnmodel % source cnmodel_venv/bin/activate
 
 ### 2) Navigate to your the location of the file
 ``` python
+(cnmodel_venv) noebrown@Noes-MacBook-Pro cnmodel % cd /Volumes/     
+(cnmodel_venv) noebrown@Noes-MacBook-Pro /Volumes % cd Macintosh\ HD/
 (cnmodel_venv) noebrown@Noes-MacBook-Pro Macintosh HD % cd Users
 (cnmodel_venv) noebrown@Noes-MacBook-Pro Users % ls
 Shared		noebrown
