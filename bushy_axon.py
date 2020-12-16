@@ -257,6 +257,7 @@ class Model():
         win.nextRow()
         Iplot = win.addPlot(labels={'left': 'Iinj (nA)', 'bottom': 'Time (ms)'})
         
+        """
         # right side:
         IVplot = rightGrid.addPlot(labels={'left': 'Vm (mV)', 'bottom': 'Icmd (nA)'})
         IVplot.showGrid(x=True, y=True)
@@ -267,7 +268,8 @@ class Model():
         
         win.ci.layout.setRowStretchFactor(0, 10)
         win.ci.layout.setRowStretchFactor(1, 5)
-
+        """
+        
         #
         # Plot the simulation results
         #
