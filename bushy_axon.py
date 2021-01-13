@@ -2,8 +2,8 @@
 Example model of a cell, and axon, and a postsynaptic cell with cnmodel.
 Output plots are:
 top : voltage at each node of ranvier
-middle : postsynaptic current
-bottom : presynaptic signal
+middle: postsynaptic current
+bottom: presynaptic signal
 
 """
 import argparse
@@ -11,6 +11,7 @@ import numpy as np
 import sys
 
 import pyqtgraph as pg
+import matplotlib.pyplot as mpl
 import cnmodel.cells
 import cnmodel.util as CU
 from neuron import h
@@ -76,7 +77,7 @@ class Model():
         There is no analytical solution.
         """
         V0 = self.cell.find_i0(showinfo=True)
-            #(Newton-Raphson or other search method)
+        # (Newton-Raphson or other search method)
         print('Currents at nominal Vrest= %.2f I = 0: I = %g ' % (V0, self.cell.i_currents(V=V0)))
         resting_meas = self.cell.compute_rmrintau(auto_initialize=False, vrange=None)
         print('    From Inst: Rin = {:7.1f}  Tau = {:7.1f}  Vm = {:7.1f}'.format(resting_meas['Rin'], resting_meas['tau'], resting_meas['v']))
@@ -129,7 +130,6 @@ class Model():
         istim.dur = 1e9 # these actually do not matter...
         istim.iMax = 0.0
         self.run_one(istim, stimdict, sites=sites) #do one simulation
-        self.show(cell=self.cell, rmponly=True) # then plot it
 
     def run_one(self, istim, stim, initflag=True, sites=None):
         """
@@ -231,7 +231,9 @@ class Model():
         # self.mon_q10 = np.array(self['q10'])
         # self.mon_ih_ntau = np.array(self['ih_ntau'])
 
-    def show(self, cell=None, rmponly=False):
+    def show_pg(self, cell=None, rmponly=False):
+        print("rmpvalue : ")
+        print(rmponly)
         """
         Plot results from run_iv()
         Using pyqtgraph.
@@ -247,7 +249,7 @@ class Model():
         # note that some of the plot windows are not used... maybe later
         #
         app = pg.mkQApp()
-        win = pg.GraphicsWindow('%s  %s (%s)' % (cell.status['name'], cell.status['modelType'], cell.status['species']))
+        win = pg.GraphicsWindow()  #'%s  %s (%s)' % (cell.status['name'], cell.status['modelType'], cell.status['species']))
         self.win = win
         win.resize(1000, 800)
         Vplot = win.addPlot(labels={'left': 'Vm (mV)', 'bottom': 'Time (ms)'})
@@ -257,7 +259,6 @@ class Model():
         win.nextRow()
         Iplot = win.addPlot(labels={'left': 'Iinj (nA)', 'bottom': 'Time (ms)'})
         
-        """
         # right side:
         IVplot = rightGrid.addPlot(labels={'left': 'Vm (mV)', 'bottom': 'Icmd (nA)'})
         IVplot.showGrid(x=True, y=True)
@@ -268,8 +269,7 @@ class Model():
         
         win.ci.layout.setRowStretchFactor(0, 10)
         win.ci.layout.setRowStretchFactor(1, 5)
-        """
-        
+
         #
         # Plot the simulation results
         #
@@ -302,18 +302,105 @@ class Model():
             xmin = trange[0]
             xmax = trange[1]
             Vplot.setXRange(xmin, xmax)
+            print("rescaled voltage")
             Iplot.setXRange(xmin, xmax)
             PostCellPlot.setXRange(xmin, xmax)
         Iplot.setXLink(Vplot)
         PostCellPlot.setXLink(Vplot)
         if rmponly:
+            print("In this condition")
             return
 
+    def show_mpl(self, cell=None, rmponly=False):
+        
+        figure = mpl.figure(constrained_layout=True) # creates box
+        figure.patch.set_facecolor((1, 1, 1)) # background color
+        ncols = 1
+        nrows = 3
+        widths = [1]
+        heights = [5, 1, 2]
+        specs = figure.add_gridspec(ncols=ncols, nrows=nrows, width_ratios=widths,
+                                  height_ratios=heights)
+        axes = []
+        labels = ['Vax (mV)', 'IPost (nV)', r'$Ca{2+}$'] 
+        for row in range(nrows):
+            for col in range(ncols):
+                if row == 0: # adds subplot
+                    ax = figure.add_subplot(specs[row, col])
+                    axes_row0 = ax
+                else:
+                    ax = figure.add_subplot(specs[row, col], sharex=axes_row0)
+                    
+                label = 'Width: {}\nHeight: {}'.format(widths[col], heights[row])
+                ax.annotate(labels[row], (1.05, 0.9), xycoords='axes fraction', ha='left', fontsize=7, color='k') # gives labels
+                axes.append(ax)
+                ax.set_facecolor((1, 1, 1))
+                ax.spines['right'].set_visible(False) # removes right axis
+                ax.spines['top'].set_visible(False) # removes top axis
+                # PH.nice_plot(ax)
+            
+        Vplot = axes[0]
+        PostCellPlot = axes[1]
+        Ca_plot = axes[2]
+        PostcellPlot = axes[1]
+        print("rmpvalue : ")
+        print(rmponly)
+        """
+        Plot results from run_iv()
+        Using pyqtgraph.
+        
+        Parameters
+        ----------
+        cell : cell object (default: None)
+        
+        """
+        
+        # Plot the simulation results
+        #
+        Vm = self.sgc_voltage_traces
+        Iinj = self.current_traces
+        DVm = self.axon_voltage_traces
+        post = self.post_cell_current_traces
+        calyxca = self.calyx_ca
+        t = self.time_values
+        steps = len(Iinj)
+        # plot I, V traces
+        color_index = np.linspace(0, 1, steps)
+        line_w = 0.4
+        for i in range(steps):
+            print('i: ', i)
+            step_color = mpl.cm.cool(color_index[i])
+            step_color2 = mpl.cm.RdGy(color_index[i])
+            Vplot.plot(t, Vm[i], color=mpl.cm.cool(i), linewidth=line_w)
+            Ca_plot.plot(t[:len(calyxca[i])], calyxca[i], color=step_color, linewidth=line_w) # calcium is more interesting
+            PostCellPlot.plot(t, post[i], color=step_color, linewidth=line_w)
+            if len(DVm) == 0:
+                continue
+            nnodes = len(DVm[i])
+            axcolor_index = np.linspace(0, 1, nnodes)
+        
+            for j in range(len(DVm[i])):  # for each site
+                if j in range(nnodes): #[1, nnodes-1]:
+                    ilen = len(DVm[i][j])
+                    Vplot.plot(t[:ilen], DVm[i][j], color=step_color2, linewidth=line_w)
+            trange = [0,140]
+            xmin = trange[0]
+            xmax = trange[1]
+            Vplot.set_xlim(xmin, xmax)
+            print("rescaled voltage")
+        mpl.show()
+        if rmponly:
+            print("In this condition")
+            return
+            
         
 if __name__ == '__main__':
     M = Model()  # create a model cell
-    M.run()  # run it here
-    if sys.flags.interactive == 0:
-        pg.QtGui.QApplication.exec_() 
-    
-    
+    M.run()
+    plot_mode = 'mpl'
+    if plot_mode == 'mpl':
+        M.show_mpl()
+    elif plot_mode == 'pg':
+        M.show_pg()
+        if sys.flags.interactive == 0:
+            pg.QtGui.QApplication.exec_() 
