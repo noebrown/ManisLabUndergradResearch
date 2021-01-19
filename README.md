@@ -12,7 +12,6 @@ noebrown@Noes-MBP cnmodel % source cnmodel_venv/bin/activate
 ``` python
 (cnmodel_venv) noebrown@Noes-MBP cnmodel % cd /Volumes/   
 (cnmodel_venv) noebrown@Noes-MBP /Volumes %  cd Macintosh\ HD/
-(cnmodel_venv) noebrown@Noes-MBP Macintosh HD % cd users/noebrown
-(cnmodel_venv) noebrown@Noes-MBP noebrown % cd Desktop
+(cnmodel_venv) noebrown@Noes-MBP Macintosh HD % cd users/noebrown/desktop/Lab/LabCode
 (cnmodel_venv) noebrown@Noes-MBP LabCode % python bushy_axon.py
 ```
