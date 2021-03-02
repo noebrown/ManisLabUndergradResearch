@@ -37,7 +37,7 @@ class Model():
                 modelType='sgc-bm', ttx=False)
 
         # Next add an axon to the cell using the add_axon tool in the cell class.
-        self.cell.add_axon(internodeDiameter=4.0, internodeLength=250., internodeELeak=-65.,
+        self.cell.add_axon(internodeDiameter=4.0, internodeLength=150., internodeELeak=-65.,
                             nodeDiameter=2.0, nodeLength=1.0, nodeELeak=-65., 
                             nodes=10, natype='nacncoop')
 
@@ -47,7 +47,7 @@ class Model():
                 modelName='XM13', modelType='II', ttx=False)
 
         # Next, we connect the SGC cell (self.cell) to the postsynaptic cell (self.post_cell) by a synapse. This synapse mimics a calyx of Held or an endbulb of Held.
-        synapsetype='multisite'  # stochastic, multiple release site synapse
+        synapsetype='multisite'  # stochastic, multiple release site synapse # change to simple for debugging
         sgc_synapses = []  # make an array to hold the synapses (we might want more than one someday)
         n_synapses = 1  # just one for now
 
@@ -56,7 +56,7 @@ class Model():
         for i in range(n_synapses):  # connect synapses between the cells.
             pre_cell =  cnmodel.cells.cell_from_section(self.cell.axnode[-1])
             post_cell = cnmodel.cells.cell_from_section(self.post_cell.soma)
-            opts = {'spike_source': 'cai', 'spike_section': self.cell.axnode[-1]}
+            opts = {'spike_source': 'cai', 'spike_section': self.cell.axnode[-1]} # add zones
             sgc_synapses.append(pre_cell.connect(post_cell, type=synapsetype, pre_opts=opts))
             sgc_synapses[-1].terminal.netcon.threshold = 0.001  # neuron parameters for synaptic connections
             sgc_synapses[-1].terminal.netcon.delay = 0.0
@@ -150,14 +150,14 @@ class Model():
         h.dt = self.dt  # establish this before we do any play/record setup
 
         # print('iv_curve:run_one')
-        (secmd, maxt, tstims) = cnmodel.util.stim.make_pulse(stim)
+        (secmd, maxt, tstims) = cnmodel.util.stim.make_pulse(stim) #creates vector for neuron to play
         # print('maxt, dt*lencmd: ', maxt, len(secmd)*self.dt)# secmd = np.append(secmd, [0.])
         # print('stim: ', stim, self.tend)
 
         # connect current command vector
         playvector = h.Vector(secmd)  # sets up to "play" the array in secmd to # the stimulating electrode in the cell 
         # Python-> neuron call to set up the stimulus
-        playvector.play(istim._ref_i, h.dt, 0, sec=self.cell.soma)
+        playvector.play(istim._ref_i, h.dt, 0, sec=self.cell.soma) #change location of stimulus
 
         self.r = {}  # results stored in a dict
         # Connect recording vectors
@@ -258,6 +258,8 @@ class Model():
         PostCellPlot = win.addPlot(labels={'left': 'Ipost (nA)', 'bottom': 'Time (ms)'})
         win.nextRow()
         Iplot = win.addPlot(labels={'left': 'Iinj (nA)', 'bottom': 'Time (ms)'})
+        win.nextRow() # PostSynapticPlot
+        PostSynapticPlot = win.addPlot(labels={'left': 'Post Synaptric Plot', 'bottom': 'Time (ms)'}) # PostSynapticPlot
         
         # right side:
         IVplot = rightGrid.addPlot(labels={'left': 'Vm (mV)', 'bottom': 'Icmd (nA)'})
@@ -290,6 +292,7 @@ class Model():
             #Iplot.plot(t, Iinj[i], pen=colors[i])  # that was the current pulses
             Iplot.plot(t[:len(calyxca[i])], calyxca[i], pen='y') # calcium is more interesting
             PostCellPlot.plot(t, post[i], pen=colors[i])
+            PostSynapticPlot.plot(t, post[i], pen=colors[i]) # PostSynapticPlot
             if len(DVm) == 0:
                 continue
             nnodes = len(DVm[i])
@@ -305,8 +308,10 @@ class Model():
             print("rescaled voltage")
             Iplot.setXRange(xmin, xmax)
             PostCellPlot.setXRange(xmin, xmax)
+            PostSynapticPlot.setXRange(xmin, xmax) # PostSynapticPlot
         Iplot.setXLink(Vplot)
         PostCellPlot.setXLink(Vplot)
+        PostSynapticPlot.setXLink(Vplot)            # PostSynapticPlot
         if rmponly:
             print("In this condition")
             return
@@ -316,13 +321,13 @@ class Model():
         figure = mpl.figure(constrained_layout=True) # creates box
         figure.patch.set_facecolor((1, 1, 1)) # background color
         ncols = 1
-        nrows = 3
+        nrows = 4 # PostSynapticPlot was prev 3
         widths = [1]
-        heights = [5, 1, 2]
+        heights = [5, 1, 2,5] # PostSynapticPlot was prev [5, 1, 2]
         specs = figure.add_gridspec(ncols=ncols, nrows=nrows, width_ratios=widths,
                                   height_ratios=heights)
         axes = []
-        labels = ['Vax (mV)', 'IPost (nV)', r'$Ca{2+}$'] 
+        labels = ['Vax (mV)', 'IPost (nV)', r'$Ca{2+}$','PostSynapticPlot'] # PostSynapticPlot was prev ['Vax (mV)', 'IPost (nV)', r'$Ca{2+}$']
         for row in range(nrows):
             for col in range(ncols):
                 if row == 0: # adds subplot
@@ -343,6 +348,7 @@ class Model():
         PostCellPlot = axes[1]
         Ca_plot = axes[2]
         PostcellPlot = axes[1]
+        PostSynapticPlot = axes[1] # PostSynapticPlot
         print("rmpvalue : ")
         print(rmponly)
         """
@@ -374,6 +380,7 @@ class Model():
             Vplot.plot(t, Vm[i], color=mpl.cm.cool(i), linewidth=line_w)
             Ca_plot.plot(t[:len(calyxca[i])], calyxca[i], color=step_color, linewidth=line_w) # calcium is more interesting
             PostCellPlot.plot(t, post[i], color=step_color, linewidth=line_w)
+            PostSynapticPlot.plot(t, post[i], color=step_color, linewidth=line_w) # PostSynapticPlot
             if len(DVm) == 0:
                 continue
             nnodes = len(DVm[i])
@@ -404,3 +411,5 @@ if __name__ == '__main__':
         M.show_pg()
         if sys.flags.interactive == 0:
             pg.QtGui.QApplication.exec_() 
+    
+    
