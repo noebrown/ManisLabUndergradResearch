@@ -49,7 +49,7 @@ class Model():
         # Next, we connect the SGC cell (self.cell) to the postsynaptic cell (self.post_cell) by a synapse. This synapse mimics a calyx of Held or an endbulb of Held.
         synapsetype='multisite'  # stochastic, multiple release site synapse # change to simple for debugging
         sgc_synapses = []  # make an array to hold the synapses (we might want more than one someday)
-        n_synapses = 1  # just one for now
+        n_synapses = 100  # just one for now
 
         h.topology()  # print out the "topology" of our cell.
         
