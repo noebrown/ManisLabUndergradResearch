@@ -14,7 +14,11 @@ import pyqtgraph as pg
 import matplotlib.pyplot as mpl
 import cnmodel.cells
 import cnmodel.util as CU
+from cnmodel import data
 from neuron import h
+import importlib
+import TBdata
+
 
 
 class Model():
@@ -37,19 +41,59 @@ class Model():
                 modelType='sgc-bm', ttx=False)
 
         # Next add an axon to the cell using the add_axon tool in the cell class.
-        self.cell.add_axon(internodeDiameter=4.0, internodeLength=250., internodeELeak=-65.,
-                            nodeDiameter=2.0, nodeLength=1.0, nodeELeak=-65., 
-                            nodes=10, natype='nacncoop')
+        self.cell.add_axon(internodeDiameter=2.8, internodeLength=225., internodeELeak=-65.,
+                            nodeDiameter=1.4, nodeLength=1.0, nodeELeak=-65., 
+                            nodes=15, natype='nacncoop')
 
-        # Now make a postsynaptic cell (this could be a VCN bushy cell, or you can think of it as an MNTB neuron).
+        #set up appropriate self.Params to use the table import
+        # self.Params.modelName='XM13'
+        # self.Params.dendriteMode=''
+        # self.Params.species='mouse'
+        # self.Params.modelType='II'
+        # data_XM13A_nacncoop
+        # import desired data table and create a post synaptic MNTB cell
+        table_name = f"TBdata.data_XM13"
+        CHAN = importlib.import_module(table_name)
+        channels=""
+        compartments=""
+        # channels = f"{name_parts[0]:s}_{nach:s}_channels"
+        # compartments = f"{name_parts[0]:s}_{nach:s}_channels_compartments"
+        print("Channels: ", channels)
+        print("Compartments: ", compartments)
+        changes = data.add_table_data(
+            channels,
+            row_key="field",
+            col_key="model_type",
+            species="mouse",
+            data=CHAN.ChannelData,
+        )
+        changes_c = data.add_table_data(
+            compartments,
+            row_key="parameter",
+            col_key="compartment",
+            species="mouse",
+            model_type="II",
+            data=CHAN.ChannelCompartments,
+        )
+
+        if changes is not None:
+            TBdata.report_changes(changes)
+            TBdata.report_changes(changes_c)
         self.post_cell = cnmodel.cells.Bushy.create(
-                species='mouse',
-                modelName='XM13', modelType='II', ttx=False)
+            species="mouse",
+            modelName="XM13",
+            modelType="II",
+            ttx=False
+        )
+        # # Now make a postsynaptic cell (this could be a VCN bushy cell, or you can think of it as an MNTB neuron).
+        # self.post_cell = cnmodel.cells.Bushy.create(
+        #         species='mouse',
+        #         modelName='XM13', modelType='II', ttx=False)
 
         # Next, we connect the SGC cell (self.cell) to the postsynaptic cell (self.post_cell) by a synapse. This synapse mimics a calyx of Held or an endbulb of Held.
         synapsetype='multisite'  # stochastic, multiple release site synapse
         sgc_synapses = []  # make an array to hold the synapses (we might want more than one someday)
-        n_synapses = 100  # just one for now
+        n_synapses = 1  # just one for now
 
         h.topology()  # print out the "topology" of our cell.
         
