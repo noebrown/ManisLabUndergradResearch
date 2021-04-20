@@ -54,9 +54,9 @@ class Model():
         # import desired data table and create a post synaptic MNTB cell
         table_name = f"TBdata.data_XM13"
         CHAN = importlib.import_module(table_name)
-        channels=""
-        compartments=""
-        # channels = f"{name_parts[0]:s}_{nach:s}_channels"
+        channels='XM13nacncoop_channels'
+        compartments='XM13nacncoop_channels_compartments'
+        
         # compartments = f"{name_parts[0]:s}_{nach:s}_channels_compartments"
         print("Channels: ", channels)
         print("Compartments: ", compartments)
@@ -67,7 +67,7 @@ class Model():
             species="mouse",
             data=CHAN.ChannelData,
         )
-        changes_c = data.add_table_data(
+        changes_comp = data.add_table_data(
             compartments,
             row_key="parameter",
             col_key="compartment",
@@ -77,8 +77,10 @@ class Model():
         )
 
         if changes is not None:
-            TBdata.report_changes(changes)
-            TBdata.report_changes(changes_c)
+            print('printing changes')
+            data.report_changes(changes)
+            data.report_changes(changes_comp)
+            print('end of list of changes')
         self.post_cell = cnmodel.cells.Bushy.create(
             species="mouse",
             modelName="XM13",
